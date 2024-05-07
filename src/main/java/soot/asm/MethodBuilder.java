@@ -337,7 +337,14 @@ public class MethodBuilder extends JSRInlinerAdapter {
       if (arg instanceof Handle) {
         Handle argHandle = (Handle) arg;
         String handleClsName = AsmUtil.toQualifiedName(argHandle.getOwner());
-        scb.addDep(RefType.v(handleClsName));
+        RefType handleType = RefType.v(handleClsName);
+        scb.addDep(handleType);
+        // ensure handle class type's correctness before being resolved
+        if (argHandle.isInterface()) {
+          soot.SootClass handleCls = handleType.getSootClass();
+          int modifiers = handleCls.getModifiers() | soot.Modifier.INTERFACE;
+          handleCls.setModifiers(modifiers);
+        }
       }
     }
   }
