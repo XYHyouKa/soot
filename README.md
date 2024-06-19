@@ -2,9 +2,17 @@
 [![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-Ready--to--Code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/soot-oss/soot) 
 
 # Enhanced resolving of classes
+
+## Optimization in Javaagent-oaat-situation
 This is for the usage of **TRUE** one class at a time. For Javaagent development, we can only access one class per round, while Soot was designed to read all classes before follow-up processes.
 So Soot will not handle dependency classes' info at once, letting work-lists to load these classes later.
 As a result, incomplete resolving causes wrong generated codes. For example, an InterfaceMethodref could be changed to a Methodref, which cannot run on JVM.
+
+## Additional bytecode attributes
+LocalVariableTable(&LocalVariableTypeTable), MethodParameters and parameter-annotations are significant for Spring applications.
+Original Soot only resolves parameter names from LocalVariableTable. As start_pc and length in LVT may be invalid after
+the class being transformed, LVT is only resolved without writing back to class. For MethodParameters, both are supported.
+[More details at Wiki](https://github.com/XYHyouKa/soot/wiki/Generate-.class-with-MethodParameters).
 
 # IMPORTANT: Soot is now succeeded by SootUp!
 **In December 2022, we have officially released [SootUp](https://soot-oss.github.io/SootUp/), a version of Soot with a completely overhauled, more modular, testable, maintainable and usable architecture. Please check this out in case you wish to start a new program-analysis project.**

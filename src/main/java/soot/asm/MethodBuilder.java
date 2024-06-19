@@ -45,9 +45,12 @@ import soot.MethodSource;
 import soot.RefType;
 import soot.SootMethod;
 import soot.Type;
+import soot.tagkit.AggregatedMethodParametersTag;
 import soot.tagkit.AnnotationConstants;
 import soot.tagkit.AnnotationDefaultTag;
 import soot.tagkit.AnnotationTag;
+import soot.tagkit.LocalVariableTableTag;
+import soot.tagkit.MethodParametersTag;
 import soot.tagkit.ParamNamesTag;
 import soot.tagkit.VisibilityAnnotationTag;
 import soot.tagkit.VisibilityLocalVariableAnnotationTag;
@@ -289,8 +292,20 @@ public class MethodBuilder extends JSRInlinerAdapter {
       }
       method.addTag(tag);
     }
-    if (!isFullyEmpty(parameterNames)) {
+    boolean localVariablesNonempty = !isFullyEmpty(parameterNames);
+    if (localVariablesNonempty) {
       method.addTag(new ParamNamesTag(parameterNames));
+    }
+    if (localVariablesNonempty) {
+      method.addTag(new LocalVariableTableTag(localVariables));
+    }
+    MethodParametersTag mpTag = null;
+    if (parameters != null) {
+      mpTag = new MethodParametersTag(parameters);
+      method.addTag(mpTag);
+    }
+    if (localVariablesNonempty || parameters != null) {
+      method.addTag(AggregatedMethodParametersTag.of(parameterNames, mpTag));
     }
     if (method.isConcrete()) {
       method.setSource(
@@ -308,7 +323,7 @@ public class MethodBuilder extends JSRInlinerAdapter {
    * 
    * @param array
    *          The array to check
-   * @return True if the given arry contains only <code>null</code> values, false otherwise
+   * @return True if the given array contains only <code>null</code> values, false otherwise
    */
   private boolean isFullyEmpty(String[] array) {
     for (int i = 0; i < array.length; i++) {

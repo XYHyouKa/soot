@@ -1,0 +1,33 @@
+Written by XYHyouKa
+
+2024-06
+
+参数名的全面解析
+- 生成 .class 时 LocalVariableTable，MethodParameters 丢失
+- 解析 .class 时解析了哪些？记录到注解和ParamNamesTag，对分析可能没有影响
+- 在 Spring 框架中，Controller 的 Mapping 方法高度依赖参数变量名，故编译时采用了 -g -parameters 选项。如果源代码均规范地使用了参数注解
+  标识变量名则无影响；如果没有，那么 Soot 生成的 .class 中不会包含 LocalVariableTable，MethodParameters，导致运行时 Mapping 方法
+  初始化失败。
+src:
+soot.asm.MethodBuilder::visitEnd()
+soot.tagkit.AggregatedMethodParametersTag
+soot.tagkit.LocalVariableTableTag
+soot.tagkit.MethodParametersTag
+test: none
+res: none
+
+2024-05
+
+确保常量池的方法类型准确
+- 加载单个.class时，常量池中的 InterfaceMethodref 解析成了 Methodref。
+- Soot 一般对指定目录的类一次性、逐个全部加载解析，可能出于代码效率考量，并未对单个.class的全部信息进行处理。
+  比如假设当前在解析的类 A.class 依赖了尚未解析的类 B.class 的接口，Soot 会先创建一个 B 的 SootClass，却并不会
+  记录“接口”这一信息，因为 B 在依赖解析队列中，Soot!!!接下来肯定会全面解析B!!!，照样能解析到 B 的“接口”属性。
+- 而在 JavaAgent 的应用中，单次只能获取到一个 .class，如果不全面解析类中的信息，经过 transform 后生成的 .class 就有可能包含错误。
+  比如上面的例子中，所依赖的 B 接口类的方法，会输出成默认的普通方法，在字节码的常量池中，InterfaceMethodref 变成了 Methodref，在运行时
+  就会出错。
+src:
+soot.asm.MethodBuilder::visitInvokeDynamicInsn(String name, String descriptor, Handle bootstrapMethodHandle,
+                                               Object... bootstrapMethodArguments)
+test: none
+res: none
